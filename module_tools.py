@@ -82,11 +82,13 @@ def handle(args):
     if args[0] == "info":
         info(module)
 
+    if args[0] == "regen":
+        module.build(regen=True)
+
     if args[0] == "build":
         for dependency in module.depends:
             dep = malt_module(mods.find_module(dependency.name))
             dep.build()
-
         module.build()
 
     if args[0] == "messages":

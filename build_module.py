@@ -34,12 +34,13 @@ def build_module(module, **kwargs):
             mod_exists = True
             cmake_dir = os.path.join(original_wd, installed[mod_name]["cmake_path"])
 
-    if mod_exists and os.path.exists(cmake_dir):
+    if mod_exists and os.path.exists(cmake_dir) and "regen" not in kwargs:
         os.chdir(cmake_dir)
     else:
-        os.makedirs(cmake_dir)
+        if not os.path.exists(cmake_dir):
+            os.makedirs(cmake_dir)
         os.chdir(cmake_dir)
-        proc = subprocess.Popen([get_cmake_path(), "-DCMAKE_INSTALL_PREFIX=" + install_prefix, module.path], stdout = subprocess.PIPE)
+        proc = subprocess.Popen([get_cmake_path(), "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_PREFIX_PATH=/home/fatih/rtk_build/", "-DCMAKE_INSTALL_PREFIX=" + install_prefix, module.path], stdout = subprocess.PIPE)
         result = proc.wait()
 
         if result != 0:

@@ -11,6 +11,7 @@ class module_registry:
     def create(wd = os.getcwd()):
         empty = {}
         empty["installed_modules"] = {}
+        empty["lib_prefix"] = ["./malt_modules"]
         open(os.path.join(wd, ".malt.json"), "w", encoding="utf-8").write(json.dumps(empty, indent=2))
         return module_registry(wd)
 
@@ -43,3 +44,10 @@ class module_registry:
             return path
 
         return None
+
+    @property
+    def library_prefixes(self):
+        return self._json_data["lib_prefix"]
+
+    def save(self):
+        self.file.write(json.dumps(self._json_data, indent=2))

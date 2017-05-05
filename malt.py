@@ -12,6 +12,13 @@ def main():
     if cmd == "init":
         reg = malt_registry.module_registry.create()
 
+    if cmd == "libs":
+        reg = malt_registry.module_registry()
+
+        for lib in reg.library_prefixes:
+            print(lib)
+
+
     return
 
 if __name__ == '__main__':
