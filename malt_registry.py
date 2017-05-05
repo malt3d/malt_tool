@@ -21,6 +21,25 @@ class module_registry:
         if os.path.exists(os.path.join(self.path, name, "module.json")):
             return os.path.join(self.path, name)
 
+        return None
+
     @property
     def installed(self):
         return self._json_data["installed_modules"]
+
+    def libraries_path(self):
+        return os.path.join(self.path, "malt_modules", "lib")
+
+    def module_lib_path(self, mod_name):
+        return os.path.join(self.libraries_path(), mod_name)
+
+    def get_library_file(self, module):
+        mod = self.find_module(module.name)
+        if self.find_module(module.name) is None:
+            return None
+
+        path = os.path.join(self.module_lib_path(module.name), "lib" + module.name + ".so")
+        if os.path.exists(path):
+            return path
+
+        return None

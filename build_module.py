@@ -12,7 +12,12 @@ def get_cmake_path():
 def get_module_dir(dir):
     return os.path.join(dir, "malt_modules/")
 
-def build_module(module):
+def build_module(module, **kwargs):
+    silent = False
+
+    if "silent" in kwargs and kwargs["silent"]:
+        silent = True
+
     original_wd = os.getcwd()
 
     install_prefix = get_module_dir(original_wd)
@@ -34,11 +39,15 @@ def build_module(module):
     else:
         os.makedirs(cmake_dir)
         os.chdir(cmake_dir)
-        proc = subprocess.Popen([get_cmake_path(), "-DCMAKE_INSTALL_PREFIX=" + install_prefix, module.path])
+        proc = subprocess.Popen([get_cmake_path(), "-DCMAKE_INSTALL_PREFIX=" + install_prefix, module.path], stdout = subprocess.PIPE)
         result = proc.wait()
+
         if result != 0:
             shutil.rmtree(cmake_dir)
             return False
+
+        if not silent:
+            print("Generated module {}".format(module.name))
 
     proc = subprocess.Popen([get_cmake_path(), "--build", ".", "--", "-j16"], stdout = subprocess.PIPE)
     res = proc.wait()
@@ -46,7 +55,8 @@ def build_module(module):
         shutil.rmtree(cmake_dir)
         return False
 
-    print("Built module {}".format(module.name))
+    if not silent:
+        print("Built module {}".format(module.name))
 
     proc = subprocess.Popen([get_cmake_path(), "--build", ".", "--", "install"], stdout = subprocess.PIPE)
     res = proc.wait()
@@ -54,7 +64,8 @@ def build_module(module):
         shutil.rmtree(cmake_dir)
         return False
 
-    print("Installed module {}".format(module.name))
+    if not silent:
+        print("Installed module {}".format(module.name))
 
     installed[module.name] = {}
     installed[module.name]["src_path"] = os.path.join("./", os.path.relpath(module.path, original_wd))

@@ -37,15 +37,18 @@ def run_objdump(lib_file):
             lines.append(parse_line(line.replace('\n', '')))
     return list(filter(lambda x : not x is None, lines))
 
+def list_messages(lib_file):
+    return run_objdump(lib_file)
 
 def main():
-    for (msg, args) in (run_objdump(sys.argv[1])):
+    for (msg, args) in (list_messages(sys.argv[1])):
         output = '{}({})'.format(msg, ", ".join(args))
         if len(sys.argv) <= 2:
             print(output)
         else:
             with open(sys.argv[2], "a") as out_file:
                 out_file.write(output + '\n')
+
 
 if __name__ == "__main__":
     main()

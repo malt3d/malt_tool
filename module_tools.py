@@ -5,7 +5,9 @@ import json
 import sys
 
 import list_components
+import list_messages
 import build_module
+import malt_registry
 
 class component_decl:
     name = ""
@@ -54,8 +56,8 @@ class malt_module:
             deps.append(dep)
         return deps
 
-    def build(self):
-        get_module.build_module(self)
+    def build(self, **kwargs):
+        build_module.build_module(self, **kwargs)
 
 def info(module):
     print(module.name)
@@ -67,25 +69,37 @@ def info(module):
         print("    + {}".format(dep.name))
 
 def handle(args):
-    mods = module_registry(os.getcwd())
+    mods = malt_registry.module_registry(os.getcwd())
 
-    if (args[0] == "info"):
-        module = malt_module(args[1])
+    if args[0] == "install":
+        for mod_name in mods.installed:
+            module = malt_module(mods.installed[mod_name]["src_path"])
+            module.build()
+        return
+
+    module = malt_module(args[1])
+
+    if args[0] == "info":
         info(module)
 
     if args[0] == "build":
-        module = malt_module(args[1])
-
         for dependency in module.depends:
             dep = malt_module(mods.find_module(dependency.name))
             dep.build()
 
         module.build()
 
-    if args[0] == "install":
-        for mod_name in mods.installed:
-            module = malt_module(mods.installed[mod_name]["src_path"])
-            module.build()
+    if args[0] == "messages":
+        module.build(silent=True)
+        file = mods.get_library_file(module)
+
+        res = list_messages.list_messages(file)
+
+        print("Messages dispatched by {}:".format(module.name))
+        for (msg, args) in res:
+            output = '    + {}({})'.format(msg, ", ".join(args))
+            print(output)
+
         return
 
 def main():
