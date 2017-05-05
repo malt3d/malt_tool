@@ -5,7 +5,7 @@ import json
 import sys
 
 import list_components
-import get_module
+import build_module
 
 class component_decl:
     name = ""
@@ -13,23 +13,6 @@ class component_decl:
 class module_decl:
     name = ""
     version = ""
-
-class module_registry:
-    def __init__(self, wd):
-        self.path = wd
-        self.file = open(os.path.join(self.path, ".malt.json"), encoding="utf-8")
-        self._json_data = json.loads(self.file.read())
-
-    def find_module(self, name):
-        if name in self.installed:
-            return self.installed[name]["src_path"]
-
-        if os.path.exists(os.path.join(self.path, name, "module.json")):
-            return os.path.join(self.path, name)
-
-    @property
-    def installed(self):
-        return self._json_data["installed_modules"]
 
 class malt_module:
     _json_data = {}
