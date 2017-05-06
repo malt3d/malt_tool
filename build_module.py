@@ -5,12 +5,36 @@ import sys
 import shutil
 import subprocess
 import json
+import malt_registry
 
 def get_cmake_path():
     return shutil.which("cmake")
 
-def get_module_dir(dir):
-    return os.path.join(dir, "malt_modules/")
+def test_module(module):
+    original_wd = os.getcwd()
+    registry = malt_registry.module_registry(original_wd)
+
+    cmake_dir = ""
+    mod_exists = False
+    for mod_name in registry.installed:
+        if (mod_name == module.name):
+            mod_exists = True
+            cmake_dir = os.path.normpath(os.path.join(original_wd, registry.installed[mod_name]["cmake_path"]))
+
+    if not mod_exists:
+        raise("Module to test is not installed!")
+
+    os.chdir(cmake_dir)
+
+    proc = subprocess.Popen([get_cmake_path(), "--build", ".", "--", "test"], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    res = proc.wait()
+    if res != 0:
+        print("Tests failed")
+        return (False, proc.stdout.read())
+
+    os.chdir(original_wd)
+    return (True, "")
+
 
 def build_module(module, **kwargs):
     silent = False
@@ -19,28 +43,33 @@ def build_module(module, **kwargs):
         silent = True
 
     original_wd = os.getcwd()
+    registry = malt_registry.module_registry(original_wd)
 
-    install_prefix = get_module_dir(original_wd)
-    json_path = os.path.join(original_wd, ".malt.json")
-    modules_j = json.loads(open(json_path, encoding="utf8").read())
-
-    installed = modules_j["installed_modules"]
-
-    cmake_dir = os.path.join(get_module_dir(original_wd), "modules/", module.name)
+    cmake_dir = os.path.join(registry.modules_path(), "modules/", module.name)
 
     mod_exists = False
-    for mod_name in installed:
+    for mod_name in registry.installed:
         if (mod_name == module.name):
             mod_exists = True
-            cmake_dir = os.path.join(original_wd, installed[mod_name]["cmake_path"])
+            cmake_dir = os.path.normpath(os.path.join(original_wd, registry.installed[mod_name]["cmake_path"]))
 
     if mod_exists and os.path.exists(cmake_dir) and "regen" not in kwargs:
         os.chdir(cmake_dir)
     else:
+        print("Generating module {}".format(module.name))
         if not os.path.exists(cmake_dir):
             os.makedirs(cmake_dir)
         os.chdir(cmake_dir)
-        proc = subprocess.Popen([get_cmake_path(), "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_PREFIX_PATH=/home/fatih/rtk_build/", "-DCMAKE_INSTALL_PREFIX=" + install_prefix, module.path], stdout = subprocess.PIPE)
+
+        proc = subprocess.Popen(
+                [get_cmake_path(),
+                 "-DCMAKE_BUILD_TYPE=Debug",
+                 "-DCMAKE_PREFIX_PATH=/home/fatih/rtk_build/",
+                 "-DCMAKE_INSTALL_PREFIX=" + registry.modules_path(),
+                 module.path],
+            stdout = subprocess.PIPE
+        )
+
         result = proc.wait()
 
         if result != 0:
@@ -68,11 +97,8 @@ def build_module(module, **kwargs):
     if not silent:
         print("Installed module {}".format(module.name))
 
-    installed[module.name] = {}
-    installed[module.name]["src_path"] = os.path.join("./", os.path.relpath(module.path, original_wd))
-    installed[module.name]["cmake_path"] = os.path.join("./", os.path.relpath(cmake_dir, original_wd))
-    json_text = json.dumps(modules_j, indent=2)
-    open(json_path, "w", encoding="utf8").write(json_text)
+    registry.add_installed_module(module, cmake_dir)
+    registry.save()
 
     os.chdir(original_wd)
     return True

@@ -59,6 +59,9 @@ class malt_module:
     def build(self, **kwargs):
         build_module.build_module(self, **kwargs)
 
+    def test(self, **kwargs):
+        return build_module.test_module(self)
+
 def info(module):
     print(module.name)
     print("Components: ")
@@ -90,6 +93,13 @@ def handle(args):
             dep = malt_module(mods.find_module(dependency.name))
             dep.build()
         module.build()
+
+    if args[0] == "test":
+        (res, msg) = module.test()
+        if res:
+            print ("All tests passed!")
+        else:
+            sys.stdout.buffer.write(msg)
 
     if args[0] == "messages":
         module.build(silent=True)

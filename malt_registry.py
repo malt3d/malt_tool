@@ -4,7 +4,7 @@ import os
 class module_registry:
     def __init__(self, wd = os.getcwd()):
         self.path = wd
-        self.file = open(os.path.join(self.path, ".malt.json"), encoding="utf-8")
+        self.file = open(os.path.join(self.path, ".malt.json"), "r+", encoding="utf-8")
         self._json_data = json.loads(self.file.read())
 
     @staticmethod
@@ -28,8 +28,16 @@ class module_registry:
     def installed(self):
         return self._json_data["installed_modules"]
 
+    def add_installed_module(self, module, cmake_dir):
+        self.installed[module.name] = {}
+        self.installed[module.name]["src_path"] = os.path.join("./", os.path.relpath(module.path, self.path))
+        self.installed[module.name]["cmake_path"] = os.path.join("./", os.path.relpath(cmake_dir, self.path))
+
+    def modules_path(self):
+        return os.path.join(self.path, "malt_modules")
+
     def libraries_path(self):
-        return os.path.join(self.path, "malt_modules", "lib")
+        return os.path.join(self.modules_path(), "lib")
 
     def module_lib_path(self, mod_name):
         return os.path.join(self.libraries_path(), mod_name)
@@ -50,4 +58,6 @@ class module_registry:
         return self._json_data["lib_prefix"]
 
     def save(self):
+        self.file.seek(0)
         self.file.write(json.dumps(self._json_data, indent=2))
+        self.file.truncate()
