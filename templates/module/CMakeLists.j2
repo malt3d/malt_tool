@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.2)
+project(malt)
+
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../malt_cmake/")
+set(CMAKE_CXX_STANDARD 14)
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
+endif()
+
+include(Malt)
+
+set(HEADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/{{module_name}}")
+set(HEADER_FILES
+        ${HEADER_PATH}/module.hpp
+        )
+
+set(SOURCE_FILES src/module.cpp)
+add_library({{module_name}} SHARED ${SOURCE_FILES})
+
+malt_def_module({{module_name}})
+
+{% for dep in dependencies %}
+malt_add_module({{module_name}} {{dep.name}})
+{% endfor %}
+
+malt_install({{module_name}} ${HEADER_PATH})

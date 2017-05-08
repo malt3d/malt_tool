@@ -1,0 +1,33 @@
+{% macro list_decls(decl) -%}
+{% for comp in decl.components -%}
+    class {{ comp }};
+{%- endfor %}
+
+{% for key,val in decl.children.items() -%}
+namespace {{ key }}
+{
+{% if val.children or val.components -%}
+    {{ list_decls(val) }}
+{%- endif %}
+}
+{%- endfor %}
+{%- endmacro %}
+
+/*
+ * Generated from malt_tool
+ * Avoid editing by hand, edit module.json and regenerate
+ */
+
+#pragma once
+
+#include <malt/list.hpp>
+{{ list_decls(fwd_decls) }}
+
+struct {{module_name}}_def {
+    using components = malt::mp::list<
+    {% for component in components %}
+        {{ component.name }}{{ "," if not loop.last }}
+    {% endfor %}
+    >;
+};
+
