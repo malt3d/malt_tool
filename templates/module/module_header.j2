@@ -24,7 +24,7 @@ namespace {{ key }}
 {{ list_decls(fwd_decls) }}
 
 struct {{module_name}}_def {
-    using components = malt::mp::list<
+    using components = malt::meta::list<
     {% for component in components %}
         {{ component.name }}{{ "," if not loop.last }}
     {% endfor %}
